@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -65,10 +66,17 @@
                     <option value="admin">Admin</option>
                 </select>
             </div>
-            <div id="guruLoginSection" class="hidden">
-                <label for="namaGuru" class="block text-sm font-medium text-gray-700">Nama Guru</label>
-                <input type="text" id="namaGuru" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" placeholder="Masukkan nama lengkap Anda">
-                <p id="guruLoginError" class="text-red-500 text-sm mt-1 hidden">Nama guru tidak terdaftar. Silakan coba lagi.</p>
+            <div id="guruLoginSection" class="hidden space-y-2">
+                <div>
+                    <label for="namaGuru" class="block text-sm font-medium text-gray-700">Nama Guru</label>
+                    <input type="text" id="namaGuru" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" placeholder="Masukkan nama lengkap Anda">
+                    <p id="guruLoginError" class="text-red-500 text-sm mt-1 hidden">Nama guru tidak terdaftar.</p>
+                </div>
+                 <div>
+                    <label for="guruPassword" class="block text-sm font-medium text-gray-700">Password Guru</label>
+                    <input type="password" id="guruPassword" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" placeholder="Masukkan password guru">
+                    <p id="guruPasswordError" class="text-red-500 text-sm mt-1 hidden">Password salah.</p>
+                </div>
             </div>
             <div id="adminLoginSection" class="hidden">
                 <label for="adminPassword" class="block text-sm font-medium text-gray-700">Password Admin</label>
@@ -81,9 +89,14 @@
         <!-- Kontainer Aplikasi Utama (Awalnya Tersembunyi) -->
         <div id="appContainer" class="hidden">
             <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-                <header class="mb-4">
-                    <h1 class="text-3xl font-bold text-yellow-900 text-center">Portal Pengumpulan Tugas</h1>
-                    <p class="text-center text-gray-500 mt-1">Platform untuk mengelola tugas siswa dan guru.</p>
+                <header class="mb-4 flex justify-between items-start">
+                    <div>
+                         <h1 class="text-3xl font-bold text-yellow-900">Portal Pengumpulan Tugas</h1>
+                         <p class="text-center text-gray-500 mt-1">Platform untuk mengelola tugas siswa dan guru.</p>
+                    </div>
+                     <button id="logoutButton" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm shadow">
+                        Keluar
+                    </button>
                 </header>
 
                 <div class="mb-4 flex justify-end items-center space-x-2">
@@ -108,12 +121,12 @@
                 <main>
                     <!-- Halaman 1: Form Pengumpulan Tugas (Untuk Siswa) -->
                     <div id="page1">
-                        <!-- ... Konten Halaman 1 sama seperti sebelumnya ... -->
+                        <!-- Konten akan diisi oleh JS -->
                     </div>
 
                     <!-- Halaman 2: Komentar Guru & Rekapitulasi -->
                     <div id="page2" class="hidden">
-                        <!-- ... Konten Halaman 2 sama seperti sebelumnya ... -->
+                        <!-- Konten akan diisi oleh JS -->
                     </div>
 
                     <!-- Halaman 3: Manajemen Guru (Untuk Admin) -->
@@ -152,21 +165,21 @@
             const guruLoginSection = document.getElementById('guruLoginSection');
             const adminLoginSection = document.getElementById('adminLoginSection');
             const namaGuru = document.getElementById('namaGuru');
+            const guruPassword = document.getElementById('guruPassword');
             const adminPassword = document.getElementById('adminPassword');
             const guruLoginError = document.getElementById('guruLoginError');
+            const guruPasswordError = document.getElementById('guruPasswordError');
             const adminLoginError = document.getElementById('adminLoginError');
             const loginButton = document.getElementById('loginButton');
+            const logoutButton = document.getElementById('logoutButton');
             
             const roleDisplay = document.getElementById('roleDisplay');
-            const page1 = document.getElementById('page1'); // Kontennya tidak ditampilkan di sini untuk keringkasan
-            const page2 = document.getElementById('page2'); // Kontennya tidak ditampilkan di sini untuk keringkasan
+            const page1 = document.getElementById('page1');
+            const page2 = document.getElementById('page2');
             const page3 = document.getElementById('page3');
             const navPage1 = document.getElementById('navPage1');
             const navPage2 = document.getElementById('navPage2');
             const navPage3 = document.getElementById('navPage3');
-            const deadlineInput = document.getElementById('deadlineInput');
-            const komentarGuru = document.getElementById('komentarGuru');
-            const rekapTabelBody = document.getElementById('rekapTabelBody');
             
             // Elemen Manajemen Guru
             const teacherList = document.getElementById('teacherList');
@@ -175,41 +188,58 @@
 
             // --- DATA APLIKASI (STATE) ---
             const adminPasswordKey = '12345';
+            const teacherPasswordKey = '54321';
             let loggedInRole = '';
-            let daftarGuru = ['Meli', 'Udin', 'Ratna', 'Surya'];
+            let daftarGuru = JSON.parse(localStorage.getItem('teacherData')) || ['Meli', 'Udin', 'Ratna', 'Surya'];
             let daftarSiswa = [
                 { id: 1, nama: 'Budi Santoso', kelas: '10A', mapel: 'Matematika', sudahMengumpulkan: false },
                 { id: 2, nama: 'Ani Yudhoyono', kelas: '10A', mapel: 'Matematika', sudahMengumpulkan: false },
                 { id: 3, nama: 'Citra Lestari', kelas: '10B', mapel: 'Fisika', sudahMengumpulkan: false },
             ];
 
-            // Re-populasi Halaman 1 dan 2 yang disembunyikan
-            page1.innerHTML = `<div id="formContainer">
-                            <h2 class="text-xl font-semibold mb-4 text-yellow-800 border-b pb-2">Formulir Pengumpulan Tugas</h2>
-                            <form id="submissionForm" class="space-y-4">
-                                <div><label for="namaSiswa" class="block text-sm font-medium text-gray-700">Nama Lengkap</label><input type="text" id="namaSiswa" name="namaSiswa" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" required></div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div><label for="kelas" class="block text-sm font-medium text-gray-700">Kelas</label><input type="text" id="kelas" name="kelas" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" required></div>
-                                    <div><label for="mapel" class="block text-sm font-medium text-gray-700">Mata Pelajaran</label><input type="text" id="mapel" name="mapel" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" required></div>
-                                </div>
-                                <div><label class="block text-sm font-medium text-gray-700">Upload File Tugas</label><div class="mt-1 flex items-center"><div class="file-input-wrapper"><button type="button" class="file-input-button">Pilih File</button><input type="file" id="fileTugas" name="fileTugas" required></div><span id="fileName" class="file-name">Belum ada file dipilih</span></div></div>
-                                <div><label for="kesimpulan" class="block text-sm font-medium text-gray-700">Kesimpulan Pelajaran</label><textarea id="kesimpulan" name="kesimpulan" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" placeholder="Tuliskan apa yang Anda pelajari dari tugas ini..."></textarea></div>
-                                <div class="pt-2"><button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 shadow-md">Kumpulkan Tugas</button></div>
-                            </form>
-                        </div><div id="deadlineMessage" class="hidden text-center p-6 bg-red-100 text-red-700 rounded-lg"><h3 class="font-bold text-lg">Waktu Habis!</h3><p>Maaf, batas waktu pengumpulan tugas telah berakhir.</p></div>`;
-
-            page2.innerHTML = `<div class="space-y-6">
-                            <div><h3 class="text-lg font-semibold text-yellow-800">Batas Waktu Pengumpulan</h3><div class="mt-2"><input type="datetime-local" id="deadlineInput" class="w-full md:w-1/2 p-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 disabled:bg-gray-100 disabled:cursor-not-allowed"><p class="text-xs text-gray-500 mt-1">Guru dapat mengubah batas waktu.</p></div></div>
-                            <div><h3 class="text-lg font-semibold text-yellow-800">Komentar & Feedback Guru</h3><textarea id="komentarGuru" rows="5" class="mt-2 w-full p-3 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 disabled:bg-gray-100" placeholder="Guru akan memberikan feedback di sini..."></textarea><p class="text-xs text-gray-500 mt-1">Hanya guru yang dapat mengisi komentar ini.</p></div>
-                            <div><h2 class="text-xl font-semibold mb-4 text-yellow-800 border-b pb-2">Rekapitulasi Pengumpulan Tugas</h2><div class="overflow-x-auto mt-4"><table class="min-w-full bg-white border border-gray-200 rounded-lg"><thead class="bg-yellow-100"><tr><th class="px-6 py-3 text-left text-xs font-medium text-yellow-800 uppercase tracking-wider">Nama Siswa</th><th class="px-6 py-3 text-left text-xs font-medium text-yellow-800 uppercase tracking-wider">Kelas</th><th class="px-6 py-3 text-left text-xs font-medium text-yellow-800 uppercase tracking-wider">Mata Pelajaran</th><th class="px-6 py-3 text-left text-xs font-medium text-yellow-800 uppercase tracking-wider">Status</th></tr></thead><tbody id="rekapTabelBody" class="divide-y divide-gray-200"></tbody></table></div></div>
-                        </div>`;
-            
-            // Re-assign DOM elements that were inside the re-populated HTML
-            const submissionForm = document.getElementById('submissionForm');
-            const fileInput = document.getElementById('fileTugas');
-            const fileNameSpan = document.getElementById('fileName');
-
             // --- FUNGSI-FUNGSI ---
+            
+            function populatePages() {
+                page1.innerHTML = `<div id="formContainer">
+                                <h2 class="text-xl font-semibold mb-4 text-yellow-800 border-b pb-2">Formulir Pengumpulan Tugas</h2>
+                                <form id="submissionForm" class="space-y-4">
+                                    <div><label for="namaSiswa" class="block text-sm font-medium text-gray-700">Nama Lengkap</label><input type="text" id="namaSiswa" name="namaSiswa" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" required></div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div><label for="kelas" class="block text-sm font-medium text-gray-700">Kelas</label><input type="text" id="kelas" name="kelas" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" required></div>
+                                        <div><label for="mapel" class="block text-sm font-medium text-gray-700">Mata Pelajaran</label><input type="text" id="mapel" name="mapel" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" required></div>
+                                    </div>
+                                    <div><label class="block text-sm font-medium text-gray-700">Upload File Tugas</label><div class="mt-1 flex items-center"><div class="file-input-wrapper"><button type="button" class="file-input-button">Pilih File</button><input type="file" id="fileTugas" name="fileTugas" required></div><span id="fileName" class="file-name">Belum ada file dipilih</span></div></div>
+                                    <div><label for="kesimpulan" class="block text-sm font-medium text-gray-700">Kesimpulan Pelajaran</label><textarea id="kesimpulan" name="kesimpulan" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500" placeholder="Tuliskan apa yang Anda pelajari dari tugas ini..."></textarea></div>
+                                    <div class="pt-2"><button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 shadow-md">Kumpulkan Tugas</button></div>
+                                </form>
+                            </div><div id="deadlineMessage" class="hidden text-center p-6 bg-red-100 text-red-700 rounded-lg"><h3 class="font-bold text-lg">Waktu Habis!</h3><p>Maaf, batas waktu pengumpulan tugas telah berakhir.</p></div>`;
+
+                page2.innerHTML = `<div class="space-y-6">
+                                <div><h3 class="text-lg font-semibold text-yellow-800">Batas Waktu Pengumpulan</h3><div class="mt-2"><input type="datetime-local" id="deadlineInput" class="w-full md:w-1/2 p-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 disabled:bg-gray-100 disabled:cursor-not-allowed"><p class="text-xs text-gray-500 mt-1">Guru dapat mengubah batas waktu.</p></div></div>
+                                <div><h3 class="text-lg font-semibold text-yellow-800">Komentar & Feedback Guru</h3><textarea id="komentarGuru" rows="5" class="mt-2 w-full p-3 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500 disabled:bg-gray-100" placeholder="Guru akan memberikan feedback di sini..."></textarea><p class="text-xs text-gray-500 mt-1">Hanya guru yang dapat mengisi komentar ini.</p></div>
+                                <div><h2 class="text-xl font-semibold mb-4 text-yellow-800 border-b pb-2">Rekapitulasi Pengumpulan Tugas</h2><div class="overflow-x-auto mt-4"><table class="min-w-full bg-white border border-gray-200 rounded-lg"><thead class="bg-yellow-100"><tr><th class="px-6 py-3 text-left text-xs font-medium text-yellow-800 uppercase tracking-wider">Nama Siswa</th><th class="px-6 py-3 text-left text-xs font-medium text-yellow-800 uppercase tracking-wider">Kelas</th><th class="px-6 py-3 text-left text-xs font-medium text-yellow-800 uppercase tracking-wider">Mata Pelajaran</th><th class="px-6 py-3 text-left text-xs font-medium text-yellow-800 uppercase tracking-wider">Status</th></tr></thead><tbody id="rekapTabelBody" class="divide-y divide-gray-200"></tbody></table></div></div>
+                            </div>`;
+                
+                // Setelah konten ditambahkan, kita bisa menambahkan event listener ke elemen di dalamnya
+                addSubmissionEventListeners();
+            }
+
+            function saveTeachers() {
+                localStorage.setItem('teacherData', JSON.stringify(daftarGuru));
+            }
+
+            function logout() {
+                appContainer.classList.add('hidden');
+                loginPage.classList.remove('hidden');
+                loginRole.value = 'siswa';
+                namaGuru.value = '';
+                guruPassword.value = '';
+                adminPassword.value = '';
+                guruLoginSection.classList.add('hidden');
+                adminLoginSection.classList.add('hidden');
+                [guruLoginError, guruPasswordError, adminLoginError].forEach(el => el.classList.add('hidden'));
+            }
+
             function navigateTo(pageId) {
                 [page1, page2, page3].forEach(p => p.classList.add('hidden'));
                 [navPage1, navPage2, navPage3].forEach(n => n.classList.remove('active'));
@@ -222,8 +252,16 @@
             }
 
             function renderTabelSiswa() {
+                const rekapTabelBody = document.getElementById('rekapTabelBody');
+                if (!rekapTabelBody) return;
                 rekapTabelBody.innerHTML = '';
-                // ... (Fungsi render tabel siswa sama seperti sebelumnya)
+                daftarSiswa.forEach(siswa => {
+                    const row = document.createElement('tr');
+                    const statusClass = siswa.sudahMengumpulkan ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                    const statusText = siswa.sudahMengumpulkan ? 'Sudah Mengumpulkan' : 'Belum Mengumpulkan';
+                    row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap">${siswa.nama}</td><td class="px-6 py-4 whitespace-nowrap">${siswa.kelas}</td><td class="px-6 py-4 whitespace-nowrap">${siswa.mapel}</td><td class="px-6 py-4 whitespace-nowrap"><span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${statusText}</span></td>`;
+                    rekapTabelBody.appendChild(row);
+                });
             }
             
             function renderTeacherList() {
@@ -235,13 +273,13 @@
                         const li = document.createElement('li');
                         li.className = 'flex justify-between items-center';
                         li.textContent = guru;
-                        
                         const deleteButton = document.createElement('button');
                         deleteButton.textContent = 'Hapus';
                         deleteButton.className = 'text-red-500 hover:text-red-700 text-sm font-semibold';
                         deleteButton.onclick = () => {
                             if (confirm(`Apakah Anda yakin ingin menghapus guru "${guru}"?`)) {
                                 daftarGuru = daftarGuru.filter(g => g !== guru);
+                                saveTeachers();
                                 renderTeacherList();
                             }
                         };
@@ -253,23 +291,32 @@
             
             function updateUI() {
                 roleDisplay.textContent = loggedInRole;
-                navPage1.classList.toggle('hidden', loggedInRole === 'admin' || loggedInRole === 'guru');
+                navPage1.classList.toggle('hidden', loggedInRole === 'admin');
+                navPage2.classList.toggle('hidden', loggedInRole === 'admin');
                 navPage3.classList.toggle('hidden', loggedInRole !== 'admin');
                 
-                document.getElementById('deadlineInput').disabled = loggedInRole !== 'guru';
-                document.getElementById('komentarGuru').disabled = loggedInRole !== 'guru';
+                if (loggedInRole !== 'admin') {
+                    document.getElementById('deadlineInput').disabled = loggedInRole !== 'guru';
+                    document.getElementById('komentarGuru').disabled = loggedInRole !== 'guru';
+                }
 
                 if (loggedInRole === 'siswa') navigateTo('page1');
                 if (loggedInRole === 'guru') navigateTo('page2');
                 if (loggedInRole === 'admin') navigateTo('page3');
             }
+
+            function isDeadlinePassed() {
+                const deadlineInput = document.getElementById('deadlineInput');
+                return new Date() > new Date(deadlineInput.value);
+            }
             
             // --- EVENT LISTENERS ---
+            logoutButton.addEventListener('click', logout);
+            
             loginRole.addEventListener('change', function() {
                 guruLoginSection.classList.add('hidden');
                 adminLoginSection.classList.add('hidden');
-                guruLoginError.classList.add('hidden');
-                adminLoginError.classList.add('hidden');
+                [guruLoginError, guruPasswordError, adminLoginError].forEach(el => el.classList.add('hidden'));
 
                 if (this.value === 'guru') guruLoginSection.classList.remove('hidden');
                 if (this.value === 'admin') adminLoginSection.classList.remove('hidden');
@@ -278,22 +325,23 @@
             loginButton.addEventListener('click', function() {
                 const role = loginRole.value;
                 let isValid = false;
+                [guruLoginError, guruPasswordError, adminLoginError].forEach(el => el.classList.add('hidden'));
 
                 if (role === 'siswa') {
                     isValid = true;
                 } else if (role === 'guru') {
                     const guruName = namaGuru.value.trim();
-                    if (daftarGuru.some(g => g.toLowerCase() === guruName.toLowerCase())) {
-                        isValid = true;
-                    } else {
-                        guruLoginError.classList.remove('hidden');
-                    }
+                    const password = guruPassword.value;
+                    const isNameValid = daftarGuru.some(g => g.toLowerCase() === guruName.toLowerCase());
+                    const isPasswordValid = password === teacherPasswordKey;
+
+                    if (!isNameValid) guruLoginError.classList.remove('hidden');
+                    if (!isPasswordValid) guruPasswordError.classList.remove('hidden');
+                    if(isNameValid && isPasswordValid) isValid = true;
+
                 } else if (role === 'admin') {
-                    if (adminPassword.value === adminPasswordKey) {
-                        isValid = true;
-                    } else {
-                        adminLoginError.classList.remove('hidden');
-                    }
+                    if (adminPassword.value === adminPasswordKey) isValid = true;
+                    else adminLoginError.classList.remove('hidden');
                 }
 
                 if (isValid) {
@@ -309,6 +357,7 @@
                 const newName = newTeacherName.value.trim();
                 if (newName && !daftarGuru.some(g => g.toLowerCase() === newName.toLowerCase())) {
                     daftarGuru.push(newName);
+                    saveTeachers();
                     renderTeacherList();
                     newTeacherName.value = '';
                     alert(`Guru "${newName}" berhasil ditambahkan.`);
@@ -324,12 +373,58 @@
                 nav.addEventListener('click', () => navigateTo(nav.id.replace('nav', '')));
             });
 
+            function addSubmissionEventListeners() {
+                const submissionForm = document.getElementById('submissionForm');
+                const fileInput = document.getElementById('fileTugas');
+                const fileNameSpan = document.getElementById('fileName');
+                
+                if (submissionForm) {
+                    submissionForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        if (isDeadlinePassed()) {
+                            alert('Batas waktu sudah habis!');
+                            return;
+                        }
+
+                        const nama = document.getElementById('namaSiswa').value;
+                        const kelas = document.getElementById('kelas').value;
+                        const siswa = daftarSiswa.find(s => s.nama.toLowerCase() === nama.toLowerCase() && s.kelas.toLowerCase() === kelas.toLowerCase());
+
+                        if (siswa) {
+                            if(siswa.sudahMengumpulkan){
+                                alert('Anda sudah pernah mengumpulkan tugas ini!');
+                                return;
+                            }
+                            siswa.sudahMengumpulkan = true;
+                        } else {
+                            const newSiswa = { id: daftarSiswa.length + 1, nama: nama, kelas: kelas, mapel: document.getElementById('mapel').value, sudahMengumpulkan: true };
+                            daftarSiswa.push(newSiswa);
+                        }
+                        renderTabelSiswa();
+                        alert('Tugas berhasil dikumpulkan!');
+                        submissionForm.reset();
+                        fileNameSpan.textContent = 'Belum ada file dipilih';
+                    });
+                }
+                if (fileInput) {
+                    fileInput.addEventListener('change', function() {
+                        fileNameSpan.textContent = this.files.length > 0 ? this.files[0].name : 'Belum ada file dipilih';
+                    });
+                }
+            }
+
             // --- INISIALISASI APLIKASI ---
             function initApp() {
-                // ... (fungsi init sama, tapi panggil renderTeacherList jika admin)
-                if (loggedInRole === 'admin') {
-                    renderTeacherList();
+                populatePages();
+                if(loggedInRole !== 'admin') {
+                    const deadline = new Date();
+                    deadline.setDate(deadline.getDate() + 3);
+                    const formattedDeadline = deadline.toISOString().slice(0, 16);
+                    document.getElementById('deadlineInput').value = formattedDeadline;
                 }
+                if (loggedInRole === 'admin') renderTeacherList();
+                if (loggedInRole === 'guru') renderTabelSiswa();
+                
                 updateUI();
             }
         });
